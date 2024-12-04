@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.utils.serializer_helpers import ReturnDict
-from .models import Photo
-from .serializer import PhotoSerializer
+from .models import Photo, Location
+from .serializer import PhotoSerializer, LocationSerializer
 
 # Get Photo Endpoint
 @api_view(['GET'])
@@ -63,7 +63,7 @@ def create_photo(request):
 
 
 
-# CRUD Operations
+# Photo CRUD Operations
 @api_view(['GET', 'PUT', 'DELETE'])
 def photo_detail(request, pk):
     try:
@@ -87,3 +87,53 @@ def photo_detail(request, pk):
     elif request.method == 'DELETE':
         photo.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# Get Location Endpoint
+@api_view(['GET'])
+def get_locations(request):
+    locations = Location.objects.all()
+    serializer = LocationSerializer(locations, many=True)
+    return Response(serializer.data)  # Return the actual data from the database
+
+# Location CRUD Operations 
+@api_view(['GET', 'PUT', 'DELETE'])
+def location_detail(request, pk):
+    try:
+        location = Location.objects.get(pk=pk)
+    except Location.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    # If we are trying to GET a specific Location
+    if request.method == 'GET':
+        serializer = LocationSerializer(location)
+        return Response(serializer.data)
+    
+    # If we are trying to update Location
+    elif request.method == 'PUT':
+        serializer = LocationSerializer(location, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == 'DELETE':
+        location.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['POST'])
+def create_location(request):
+    # Make a mutable copy of the request data
+    data = request.data.copy()
+    
+    print(f"Initial payload: {data}")
+
+    # Serialize and save
+    serializer = LocationSerializer(data=data)
+    if serializer.is_valid():
+        serializer.save()
+        print(f"Location saved successfully: {serializer.data}")
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    print(f"Serializer errors: {serializer.errors}")
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
