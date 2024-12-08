@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.utils.serializer_helpers import ReturnDict
-from .models import Photo, Location
-from .serializer import PhotoSerializer, LocationSerializer
+from .models import Photo, Location, Photoshoot
+from .serializer import PhotoSerializer, LocationSerializer, PhotoshootSerializer
 
 # Get Photo Endpoint
 @api_view(['GET'])
@@ -133,6 +133,37 @@ def create_location(request):
     if serializer.is_valid():
         serializer.save()
         print(f"Location saved successfully: {serializer.data}")
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    print(f"Serializer errors: {serializer.errors}")
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Get Photoshoot Endpoint
+@api_view(['GET'])
+def get_photoshoot(request):
+    # Use select_related to optimize foreign key lookups (LocationId in Photoshoot)
+    photoshoot = Photoshoot.objects.all().select_related('LocationId')
+    
+    # Serialize the data using PhotoshootSerializer
+    serializer = PhotoshootSerializer(photoshoot, many=True)
+    
+    # Return the serialized data as a response
+    return Response(serializer.data)
+
+# Create a Photoshoot 
+@api_view(['POST'])
+def create_photoshoot(request):
+    # Make a mutable copy of the request data
+    data = request.data.copy()
+    
+    print(f"Initial payload: {data}")
+
+    # Serialize and save
+    serializer = PhotoshootSerializer(data=data)
+    if serializer.is_valid():
+        serializer.save()
+        print(f"Photoshoot saved successfully: {serializer.data}")
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     print(f"Serializer errors: {serializer.errors}")

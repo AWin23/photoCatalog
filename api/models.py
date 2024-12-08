@@ -24,3 +24,16 @@ class Location(models.Model):
 
     def __str__(self):
         return f"{self.LocationId} - {self.LocationName}"
+
+    
+    # Class for Photoshoot
+class Photoshoot(models.Model):
+    PhotoshootId = models.AutoField(primary_key=True) # Identify column as Primary key
+    LocationId = models.ForeignKey(Location, on_delete=models.CASCADE, db_column='LocationId')
+    Date = models.DateTimeField(null=True, blank=True)  # Matches `datetime2(7)`
+    
+    class Meta:
+        db_table = "Photoshoot" # Ensure the table name matches
+        
+    def __str__(self):
+        return f"{self.PhotoshootId} - {self.Date}"
