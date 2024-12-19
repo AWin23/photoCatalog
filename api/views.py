@@ -4,8 +4,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.utils.serializer_helpers import ReturnDict
-from .models import Photo, Location, Photoshoot
-from .serializer import PhotoSerializer, LocationSerializer, PhotoshootSerializer
+from .models import Photo, Location, Photoshoot, PhotoshootPhotoJunction
+from .serializer import PhotoSerializer, LocationSerializer, PhotoshootSerializer, PhotoshootPhotoJunctionSerializer
 
 # Get Photo Endpoint
 @api_view(['GET'])
@@ -168,3 +168,29 @@ def create_photoshoot(request):
     
     print(f"Serializer errors: {serializer.errors}")
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Photoshoot CRUD Operations 
+@api_view(['GET', 'PUT', 'DELETE'])
+def photoshoot_detail(request, pk):
+    try:
+        photoshoot_detail = Photoshoot.objects.get(pk=pk)
+    except Photoshoot.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    # If we are trying to GET a specific Photoshoot
+    if request.method == 'GET':
+        serializer = PhotoshootSerializer(photoshoot_detail)
+        return Response(serializer.data)
+    
+    # If we are trying to update Location
+    elif request.method == 'PUT':
+        serializer = PhotoshootSerializer(photoshoot_detail, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == 'DELETE':
+        photoshoot_detail.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+

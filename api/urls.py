@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import get_photos, create_photo, photo_detail, get_locations, create_location, location_detail, get_photoshoot, create_photoshoot
+from .views import get_photos, create_photo, photo_detail, get_locations, create_location, location_detail, get_photoshoot, create_photoshoot, photoshoot_detail
 
 urlpatterns = [
     path('photo/', get_photos, name='photo_detail'),
@@ -9,5 +9,6 @@ urlpatterns = [
     path('location/create/', create_location, name='create_location'),
     path('location/<int:pk>', location_detail, name='location_detail'),
     path('photoshoot/', get_photoshoot, name='get_photoshoot'),
-    path('photoshoot/create/', create_photoshoot, name='create_photoshoot')
+    path('photoshoot/create/', create_photoshoot, name='create_photoshoot'),
+    path('photoshoot/<int:pk>', photoshoot_detail, name='photoshoot_detail'),
 ]

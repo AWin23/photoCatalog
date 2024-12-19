@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Photo, Location, Photoshoot
+from .models import Photo, Location, Photoshoot, PhotoshootPhotoJunction
 
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,16 +13,14 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
 class PhotoshootSerializer(serializers.ModelSerializer):
-    # This will ensure that the location field is serialized properly
-    LocationId = LocationSerializer(read_only=True)
-
     class Meta:
         model = Photoshoot
         fields = '__all__'
         
-    def validate_LocationId(self, value):
-        # Ensure LocationId exists in the Location table
-        if not Location.objects.filter(LocationId=value).exists():
-            raise serializers.ValidationError("Invalid LocationId")
-        return value
+class PhotoshootPhotoJunctionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PhotoshootPhotoJunction
+        fields = '__all__'
+        
+
 

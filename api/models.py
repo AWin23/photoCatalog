@@ -37,3 +37,15 @@ class Photoshoot(models.Model):
         
     def __str__(self):
         return f"{self.PhotoshootId} - {self.Date}"
+    
+    # Class for PhotoshootPhotoJunction
+class PhotoshootPhotoJunction(models.Model):
+    PhotoID = models.ForeignKey(Photo, on_delete=models.CASCADE, db_column='PhotoID')
+    PhotoshootId = models.ForeignKey(Photoshoot, on_delete=models.CASCADE, db_column='PhotoshootID')
+    
+    class Meta: 
+        db_table = "PhotoshootPhotoJunction"
+        
+    def __str__(self):
+        return f"{self.PhotoID} - {self.PhotoshootId}"
+
