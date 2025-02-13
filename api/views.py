@@ -1,5 +1,6 @@
 import uuid
 from uuid import UUID
+from django.http import QueryDict  # Import QueryDict to fix NameError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -22,12 +23,16 @@ def is_valid_uuid(val):
     except ValueError:
         return False
     
-# Post a new Photo
 @api_view(['POST'])
 def create_photo(request):
-    # Make a mutable copy of the request data
-    data = request.data.copy()
-    
+    print(f"Request data type: {type(request.data)}")
+
+    # Convert request data to a mutable dictionary
+    if isinstance(request.data, QueryDict):  # If request.data is a QueryDict, convert it to a dict
+        data = request.data.dict()
+    else:
+        data = dict(request.data)
+
     print(f"Initial payload: {data}")
 
     # Validate or generate PhotoGUID
@@ -52,14 +57,16 @@ def create_photo(request):
         return Response({'error': error_message}, status=status.HTTP_400_BAD_REQUEST)
 
     # Serialize and save
-    serializer = PhotoSerializer(data=data)
+    serializer = PhotoSerializer(data=request.data)  # FIXED: Removed files=files
     if serializer.is_valid():
         serializer.save()
         print(f"Photo saved successfully: {serializer.data}")
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
     print(f"Serializer errors: {serializer.errors}")
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
