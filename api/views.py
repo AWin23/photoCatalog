@@ -3,10 +3,13 @@ from uuid import UUID
 from django.http import QueryDict  # Import QueryDict to fix NameError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.decorators import parser_classes
+from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from rest_framework.utils.serializer_helpers import ReturnDict
 from .models import Photo, Location, Photoshoot, PhotoshootPhotoJunction
 from .serializer import PhotoSerializer, LocationSerializer, PhotoshootSerializer, PhotoshootPhotoJunctionSerializer
+
 
 # Get Photo Endpoint
 @api_view(['GET'])
@@ -23,16 +26,13 @@ def is_valid_uuid(val):
     except ValueError:
         return False
     
+    
 @api_view(['POST'])
+@parser_classes([MultiPartParser])
 def create_photo(request):
     print(f"Request data type: {type(request.data)}")
 
-    # Convert request data to a mutable dictionary
-    if isinstance(request.data, QueryDict):  # If request.data is a QueryDict, convert it to a dict
-        data = request.data.dict()
-    else:
-        data = dict(request.data)
-
+    data = request.data.dict()  # Convert to a mutable dictionary
     print(f"Initial payload: {data}")
 
     # Validate or generate PhotoGUID
@@ -44,20 +44,25 @@ def create_photo(request):
         if not is_valid_uuid(data['PhotoGUID']):
             print(f"PhotoGUID {data['PhotoGUID']} is invalid. Generating a new UUID.")
             data['PhotoGUID'] = str(uuid.uuid4())
-        else:
-            print(f"PhotoGUID {data['PhotoGUID']} is valid.")
 
-    # Convert PhotoGUID to a UUID object explicitly
     try:
-        data['PhotoGUID'] = uuid.UUID(data['PhotoGUID'])  # Ensure it's a UUID object
+        data['PhotoGUID'] = uuid.UUID(data['PhotoGUID'])
         print(f"Converted PhotoGUID to UUID object: {data['PhotoGUID']}")
     except ValueError as e:
-        error_message = f"Failed to convert PhotoGUID to UUID: {e}"
-        print(error_message)
-        return Response({'error': error_message}, status=status.HTTP_400_BAD_REQUEST)
+        print(f"Failed to convert PhotoGUID to UUID: {e}")
+        return Response({'error': f'Invalid UUID: {e}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Handle the image file separately
+    if 'image' in request.FILES:
+        image_file = request.FILES['image']
+        data['FileName'] = image_file.name
+        data['ImagePath'] = image_file.name  # Adjust based on storage needs
+    else:
+        print("No image file found in request.")
+        return Response({'error': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Serialize and save
-    serializer = PhotoSerializer(data=request.data)  # FIXED: Removed files=files
+    serializer = PhotoSerializer(data=data)  
     if serializer.is_valid():
         serializer.save()
         print(f"Photo saved successfully: {serializer.data}")
@@ -65,9 +70,6 @@ def create_photo(request):
 
     print(f"Serializer errors: {serializer.errors}")
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
 
 
 # Photo CRUD Operations

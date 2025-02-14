@@ -7,6 +7,8 @@ class Photo(models.Model):
     #PhotoGUID = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)  # Avoid null=True for UUID
     FileName = models.CharField(max_length=256, null=True, blank=True)  # Matches `nvarchar(256)`
     TimeStamp = models.DateTimeField(null=True, blank=True)  # Matches `datetime2(7)`
+    ImagePath = models.CharField(max_length=512, null=True, blank=True)  # Store image URL or path
+
 
     class Meta:
         db_table = "Photo"  # Ensure the table name is consistent
