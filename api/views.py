@@ -9,6 +9,11 @@ from rest_framework import status
 from rest_framework.utils.serializer_helpers import ReturnDict
 from .models import Photo, Location, Photoshoot, PhotoshootPhotoJunction
 from .serializer import PhotoSerializer, LocationSerializer, PhotoshootSerializer, PhotoshootPhotoJunctionSerializer
+from django.http import FileResponse, HttpResponse
+from django.shortcuts import get_object_or_404
+from django.conf import settings
+import os
+
 
 
 # Get Photo Endpoint
@@ -31,45 +36,62 @@ def is_valid_uuid(val):
 @parser_classes([MultiPartParser])
 def create_photo(request):
     print(f"Request data type: {type(request.data)}")
+    print(f"Initial payload: {request.data}")
 
-    data = request.data.dict()  # Convert to a mutable dictionary
-    print(f"Initial payload: {data}")
+    # Extract form data without deepcopy
+    data = request.data.dict()  # ✅ Prevents deepcopy issue
 
     # Validate or generate PhotoGUID
     if 'PhotoGUID' not in data:
         print("PhotoGUID missing in payload. Generating a new UUID.")
         data['PhotoGUID'] = str(uuid.uuid4())
-    else:
-        print(f"Received PhotoGUID: {data['PhotoGUID']}")
-        if not is_valid_uuid(data['PhotoGUID']):
-            print(f"PhotoGUID {data['PhotoGUID']} is invalid. Generating a new UUID.")
-            data['PhotoGUID'] = str(uuid.uuid4())
+    elif not is_valid_uuid(data['PhotoGUID']):
+        print(f"PhotoGUID {data['PhotoGUID']} is invalid. Generating a new UUID.")
+        data['PhotoGUID'] = str(uuid.uuid4())
 
     try:
         data['PhotoGUID'] = uuid.UUID(data['PhotoGUID'])
         print(f"Converted PhotoGUID to UUID object: {data['PhotoGUID']}")
     except ValueError as e:
-        print(f"Failed to convert PhotoGUID to UUID: {e}")
         return Response({'error': f'Invalid UUID: {e}'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Handle the image file separately
-    if 'image' in request.FILES:
-        image_file = request.FILES['image']
-        data['FileName'] = image_file.name
-        data['ImagePath'] = image_file.name  # Adjust based on storage needs
-    else:
-        print("No image file found in request.")
+    # Handle image file separately
+    image_file = request.FILES.get('image')
+    if not image_file:
         return Response({'error': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
+    data['FileName'] = image_file.name
+    data['ImagePath'] = image_file  # Keep actual file object
+
     # Serialize and save
-    serializer = PhotoSerializer(data=data)  
+    serializer = PhotoSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
-        print(f"Photo saved successfully: {serializer.data}")
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    print(f"Serializer errors: {serializer.errors}")
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def serve_photo_by_id(request, photo_id):
+    try:
+        # Retrieve the specific photo by its ID
+        photo = Photo.objects.get(PhotoID=photo_id)
+        
+        # Ensure `photo.ImagePath` is a string and construct the full path
+        file_path = os.path.join(settings.MEDIA_ROOT, str(photo.ImagePath))
+
+        # Debugging statement to see what path is being accessed
+        print(f"Serving image from: {file_path}")
+
+        if os.path.exists(file_path):
+            return FileResponse(open(file_path, "rb"), content_type="image/jpeg")  # Adjust MIME type if needed
+
+        return HttpResponse("File not found", status=404)
+    
+    except Photo.DoesNotExist:
+        return HttpResponse("Photo not found", status=404)
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
 
 
 # Photo CRUD Operations

@@ -1,5 +1,11 @@
 from django.urls import path
-from .views import get_photos, create_photo, photo_detail, get_locations, create_location, location_detail, get_photoshoot, create_photoshoot, photoshoot_detail
+from .views import (
+    get_photos, create_photo, photo_detail, get_locations,
+    create_location, location_detail, get_photoshoot,
+    create_photoshoot, photoshoot_detail, serve_photo_by_id
+)
+from django.urls import path, re_path
+from django.views.static import serve
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -13,8 +19,13 @@ urlpatterns = [
     path('photoshoot/', get_photoshoot, name='get_photoshoot'),
     path('photoshoot/create/', create_photoshoot, name='create_photoshoot'),
     path('photoshoot/<int:pk>', photoshoot_detail, name='photoshoot_detail'),
+    path("media/uploads", serve_photo_by_id, name="serve_photo_by_id"),
 ]
 
-# Only serve media files in development
-# if settings.DEBUG:
-#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    urlpatterns += [
+        re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+    ]
