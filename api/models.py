@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User  # Assuming Django's built-in User model
 import uuid  # For generating UUIDs
 
     # Class for Photo
@@ -20,12 +21,16 @@ class Photo(models.Model):
 class Location(models.Model):
     LocationId = models.AutoField(primary_key=True)
     LocationName = models.CharField(max_length=256, null=True, blank=True)
+    Address = models.CharField(max_length=512, null=True, blank=True)
+    Latitude = models.FloatField(null=True, blank=True)
+    Longitude = models.FloatField(null=True, blank=True)
 
     class Meta:
-        db_table = "Location"  # Ensure the table name is consistent
+        db_table = "Location"
 
     def __str__(self):
         return f"{self.LocationId} - {self.LocationName}"
+
 
     
     # Class for Photoshoot

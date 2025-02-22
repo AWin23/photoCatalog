@@ -8,9 +8,15 @@ class PhotoSerializer(serializers.ModelSerializer):
         read_only_fields = ['PhotoGUID']  # Prevent manual input
         
 class LocationSerializer(serializers.ModelSerializer):
+    location_name = serializers.CharField(source='LocationName', required=False)
+    address = serializers.CharField(source='Address', required=False)
+    latitude = serializers.FloatField(source='Latitude', required=False)
+    longitude = serializers.FloatField(source='Longitude', required=False)
+
     class Meta:
         model = Location
-        fields = '__all__'
+        fields = ['LocationId', 'location_name', 'address', 'latitude', 'longitude']
+
         
 class PhotoshootSerializer(serializers.ModelSerializer):
     class Meta:

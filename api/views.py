@@ -1,5 +1,6 @@
 import uuid
 from uuid import UUID
+import requests
 from django.http import QueryDict  # Import QueryDict to fix NameError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -9,11 +10,14 @@ from rest_framework import status
 from rest_framework.utils.serializer_helpers import ReturnDict
 from .models import Photo, Location, Photoshoot, PhotoshootPhotoJunction
 from .serializer import PhotoSerializer, LocationSerializer, PhotoshootSerializer, PhotoshootPhotoJunctionSerializer
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 import os
 
+
+# Replace with your actual Google Maps API Key
+GOOGLE_MAPS_API_KEY = "AIzaSyCq3HQzTtwozhVSJk-ZoEbThI7XbUljyBA"
 
 
 # Get Photo Endpoint
@@ -152,22 +156,56 @@ def location_detail(request, pk):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+def get_lat_lon_from_address(address):
+    """Fetch latitude and longitude using Google Maps Geocoding API"""
+    url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={GOOGLE_MAPS_API_KEY}"
+    response = requests.get(url)
+    data = response.json()
+    
+    if data["status"] == "OK":
+        location = data["results"][0]["geometry"]["location"]
+        latitude, longitude = location["lat"], location["lng"]
+        
+        print("Geocoding result:", latitude, longitude)  # ✅ Now this works correctly
+        
+        return latitude, longitude
+    
+    print("❌ Geocoding API failed:", data)  # 🔍 Log the full response to debug
+    return None, None  # Return None if the API fails
+
 @api_view(['POST'])
 def create_location(request):
-    # Make a mutable copy of the request data
-    data = request.data.copy()
+    print("Incoming request data:", request.data)  # Debugging
     
-    print(f"Initial payload: {data}")
+    data = request.data.copy()
+    address = data.get("address", "").strip()
 
-    # Serialize and save
+    if not address:
+        print("❌ Address is missing!")
+        return Response({"error": "Address is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    latitude, longitude = get_lat_lon_from_address(address)
+    if latitude is None or longitude is None:
+        print("❌ Failed to fetch lat/lng from address!")
+        return Response({"error": "Failed to fetch latitude/longitude"}, status=status.HTTP_400_BAD_REQUEST)
+
+    data["latitude"] = latitude
+    data["longitude"] = longitude
+
+    print("✅ Data before serializer:", data)  # 🔍 Check if data is correctly formatted before the serializer
+
     serializer = LocationSerializer(data=data)
+    print("✅ Serializer instantiated")
+
     if serializer.is_valid():
-        serializer.save()
-        print(f"Location saved successfully: {serializer.data}")
+        print("✅ Validated data before saving:", serializer.validated_data)
+        location = serializer.save()
+        print(f"✅ Location saved: {location}")  # Debugging
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-    print(f"Serializer errors: {serializer.errors}")
+    print("❌ Validation Errors:", serializer.errors)  # 🔥 Log the actual error
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 # Get Photoshoot Endpoint
@@ -182,23 +220,35 @@ def get_photoshoot(request):
     # Return the serialized data as a response
     return Response(serializer.data)
 
-# Create a Photoshoot 
+# GET /api/photoshoots?locationID=123
+@api_view(['GET'])
+def get_photoshoots_by_location(request):
+    location_id = request.GET.get('locationID')
+
+    if not location_id:
+        return Response({"error": "Missing locationID parameter"}, status=status.HTTP_400_BAD_REQUEST)
+
+    photoshoots = Photoshoot.objects.filter(LocationId=location_id).values("PhotoshootId", "Date")
+
+    return Response(photoshoots, status=status.HTTP_200_OK)
+
+
+# POST /api/photoshoots/create/
 @api_view(['POST'])
 def create_photoshoot(request):
-    # Make a mutable copy of the request data
-    data = request.data.copy()
-    
-    print(f"Initial payload: {data}")
+    data = request.data
+    location_id = data.get('LocationId')
+    date = data.get('Date')
 
-    # Serialize and save
-    serializer = PhotoshootSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save()
-        print(f"Photoshoot saved successfully: {serializer.data}")
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    print(f"Serializer errors: {serializer.errors}")
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if not location_id or not date:
+        return Response({"error": "LocationId and Date are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    location = get_object_or_404(Location, pk=location_id)
+
+    new_photoshoot = Photoshoot(LocationId=location, Date=date)
+    new_photoshoot.save()
+
+    return Response({"message": "Photoshoot scheduled successfully!", "PhotoshootId": new_photoshoot.PhotoshootId}, status=status.HTTP_201_CREATED)
 
 # Photoshoot CRUD Operations 
 @api_view(['GET', 'PUT', 'DELETE'])
