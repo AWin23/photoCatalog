@@ -14,10 +14,15 @@ from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 import os
+from dotenv import load_dotenv
 
+# Load the .env file from the parent directory
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', 'photocatalog' , '.env'))
 
-# Replace with your actual Google Maps API Key
-GOOGLE_MAPS_API_KEY = "AIzaSyCq3HQzTtwozhVSJk-ZoEbThI7XbUljyBA"
+# Access your API key
+GOOGLE_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
+print(f"API Key: {GOOGLE_API_KEY}")  # Debug line to check the value
+
 
 
 # Get Photo Endpoint
@@ -158,7 +163,7 @@ def location_detail(request, pk):
 
 def get_lat_lon_from_address(address):
     """Fetch latitude and longitude using Google Maps Geocoding API"""
-    url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={GOOGLE_MAPS_API_KEY}"
+    url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={GOOGLE_API_KEY}"
     response = requests.get(url)
     data = response.json()
     
