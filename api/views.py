@@ -213,34 +213,25 @@ def create_location(request):
 
 
 
-# Get Photoshoot Endpoint
+# Get Photoshoot Endpoint or # GET /api/photoshoots?locationID=123
 @api_view(['GET'])
 def get_photoshoot(request):
-    # Use select_related to optimize foreign key lookups (LocationId in Photoshoot)
-    photoshoot = Photoshoot.objects.all().select_related('LocationId')
-    
-    # Serialize the data using PhotoshootSerializer
-    serializer = PhotoshootSerializer(photoshoot, many=True)
-    
-    # Return the serialized data as a response
-    return Response(serializer.data)
-
-# GET /api/photoshoots?locationID=123
-@api_view(['GET'])
-def get_photoshoots_by_location(request):
     location_id = request.GET.get('locationID')
 
-    if not location_id:
-        return Response({"error": "Missing locationID parameter"}, status=status.HTTP_400_BAD_REQUEST)
+    if location_id:
+        photoshoots = Photoshoot.objects.filter(LocationId=location_id).values("PhotoshootId", "Date")
+    else:
+        photoshoots = Photoshoot.objects.all().select_related('LocationId')
 
-    photoshoots = Photoshoot.objects.filter(LocationId=location_id).values("PhotoshootId", "Date")
+    serializer = PhotoshootSerializer(photoshoots, many=True)
+    return Response(serializer.data)
 
-    return Response(photoshoots, status=status.HTTP_200_OK)
 
-
-# POST /api/photoshoots/create/
+# POST /api/photoshoot/create
 @api_view(['POST'])
 def create_photoshoot(request):
+    print("Received Data:", request.data)  # Debugging line
+    
     data = request.data
     location_id = data.get('LocationId')
     date = data.get('Date')

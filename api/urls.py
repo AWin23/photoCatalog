@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     get_photos, create_photo, photo_detail, get_locations,
-    create_location, location_detail, get_photoshoot, get_photoshoots_by_location,
+    create_location, location_detail, get_photoshoot,
     create_photoshoot, photoshoot_detail, serve_photo_by_id
 )
 from django.urls import path, re_path
@@ -16,7 +16,7 @@ urlpatterns = [
     path('location/', get_locations, name='get_locations'),
     path('location/create/', create_location, name='create_location'),
     path('location/<int:pk>', location_detail, name='location_detail'),
-    path('photoshoots/', get_photoshoots_by_location, name='get_photoshoots_by_location'),
+    path('photoshoots/', get_photoshoot, name='get_photoshoot'),
     path('photoshoot/create/', create_photoshoot, name='create_photoshoot'),
     path('photoshoot/<int:pk>', photoshoot_detail, name='photoshoot_detail'),
     path("media/uploads", serve_photo_by_id, name="serve_photo_by_id"),
