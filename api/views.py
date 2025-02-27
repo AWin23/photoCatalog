@@ -216,15 +216,15 @@ def create_location(request):
 # Get Photoshoot Endpoint or # GET /api/photoshoots?locationID=123
 @api_view(['GET'])
 def get_photoshoot(request):
-    location_id = request.GET.get('locationID')
+    location_id = request.GET.get('locationId')  # Match the parameter name exactly
 
     if location_id:
-        photoshoots = Photoshoot.objects.filter(LocationId=location_id).values("PhotoshootId", "Date")
+        photoshoots = Photoshoot.objects.filter(LocationId=location_id).values("PhotoshootId", "Date", "LocationId")  # Ensure LocationId is included for clarity
     else:
-        photoshoots = Photoshoot.objects.all().select_related('LocationId')
+        photoshoots = Photoshoot.objects.all().values("PhotoshootId", "Date", "LocationId")
 
-    serializer = PhotoshootSerializer(photoshoots, many=True)
-    return Response(serializer.data)
+    return Response(list(photoshoots))  # Convert QuerySet to list to avoid potential serialization issues
+
 
 
 # POST /api/photoshoot/create

@@ -17,8 +17,8 @@ urlpatterns = [
     path('location/create/', create_location, name='create_location'),
     path('location/<int:pk>', location_detail, name='location_detail'),
     path('photoshoots/', get_photoshoot, name='get_photoshoot'),
-    path('photoshoot/create/', create_photoshoot, name='create_photoshoot'),
-    path('photoshoot/<int:pk>', photoshoot_detail, name='photoshoot_detail'),
+    path('photoshoots/create/', create_photoshoot, name='create_photoshoot'),
+    path('photoshoots/<int:pk>', photoshoot_detail, name='photoshoot_detail'),
     path("media/uploads", serve_photo_by_id, name="serve_photo_by_id"),
 ]
 
