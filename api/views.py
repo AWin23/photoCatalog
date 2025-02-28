@@ -250,24 +250,23 @@ def create_photoshoot(request):
 @api_view(['GET', 'PUT', 'DELETE'])
 def photoshoot_detail(request, pk):
     try:
-        photoshoot_detail = Photoshoot.objects.get(pk=pk)
+        photoshoot = Photoshoot.objects.get(pk=pk)
     except Photoshoot.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Photoshoot not found"}, status=status.HTTP_404_NOT_FOUND)
     
-    # If we are trying to GET a specific Photoshoot
     if request.method == 'GET':
-        serializer = PhotoshootSerializer(photoshoot_detail)
+        serializer = PhotoshootSerializer(photoshoot)
         return Response(serializer.data)
     
-    # If we are trying to update Location
     elif request.method == 'PUT':
-        serializer = PhotoshootSerializer(photoshoot_detail, data=request.data)
+        serializer = PhotoshootSerializer(photoshoot, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     elif request.method == 'DELETE':
-        photoshoot_detail.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        photoshoot.delete()
+        return Response({"message": "Photoshoot deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
