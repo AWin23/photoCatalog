@@ -10,6 +10,7 @@ Before setting up the project, ensure you have the following installed:
 - [Node.js & npm](https://nodejs.org/)  
 - [PostgreSQL](https://www.postgresql.org/download/) (or SQLite for local development)  
 - [Virtualenv](https://virtualenv.pypa.io/en/latest/) (optional but recommended)  
+- [Azure Data Studio](https://learn.microsoft.com/en-us/azure-data-studio/download-azure-data-studio) (for database management)
 
 ## Setup Instructions  
 
@@ -22,38 +23,38 @@ cd <your-repo-folder>
 
 #### Create & Activate a Virtual Environment
 #### Create virtual environment
-python -m venv venv  
+`python -m venv venv`
 
 #### Activate virtual environment  
 #### Windows  
-venv\Scripts\activate  
+`venv\Scripts\activate`
 
 #### macOS/Linux  
-source venv/bin/activate  
+`source venv/bin/activate  `
 
 
 #### Installing Dependencies
-pip install -r requirements.txt  
+`pip install -r requirements.txt  `
 
 
 ## Set Up Environment Variables
 Create a .env file in the root of your project and add the following:
 
-SECRET_KEY=your_secret_key_here  
+`SECRET_KEY=your_secret_key_here  
 DEBUG=True  
-DATABASE_URL=your_database_url_here  
+DATABASE_URL=your_database_url_here  `
 
 
 ## Run database migrations
-python manage.py migrate 
+`python manage.py migrate `
 
 ## Run database migrations
-python manage.py createsuperuser  
-
+`python manage.py createsuperuser  
+`
 
 ## Running Development Server
-python manage.py runserver  
-
+`python manage.py runserver  
+`
 
 
 
