@@ -2,6 +2,9 @@
 
 This is the backend for the SnapVenue - Photoshoot Scheduling App. It is built with Python (Django) and serves APIs for managing photoshoots, and locations.  
 
+## Backend System Architecture
+![Implementation Diagram that I created before starting the project. Helped me get a better idea of overall system implementation. I learned this from CSS 370 at UW Bothell and my recent internship at T-Mobile.](./System_Diagram_PhotoCatalog.png).
+
 ## Prerequisites  
 
 Before setting up the project, ensure you have the following installed:  
